@@ -5,11 +5,9 @@
 #include <fcntl.h>
 
 #include "timer.h"
+#include "defaults.h"
 #include "args.h"
 #include "inter.h"
-
-#define ALARM_FILENAME  "/usr/local/etc/alarm"
-#define ALARM_TIMEOUT   3
 
 #define PLAY_BUF_SIZE   (1024 * 128)
 

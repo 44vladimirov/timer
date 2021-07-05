@@ -1,9 +1,8 @@
 #include <stddef.h>
 
 #include "timer.h"
+#include "defaults.h"
 #include "args.h"
-
-#define ALARM_REPEAT_COUNT  10
 
 static int str2num(const char *str, unsigned *num) {
     unsigned i;
