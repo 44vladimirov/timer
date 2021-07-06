@@ -4,8 +4,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "timer.h"
 #include "inter.h"
+#include "messages.h"
 #include "threads.h"
 
 #define BUF_SIZE    1024
@@ -18,13 +18,13 @@ struct buffer {
 
 /* enum type corresponds to cmds */
 enum type {
-    null_t = 0,
-    exit_t,
-    help_t,
-    pause_t,
-    query_t,
-    resume_t,
-    last_t /* needed for counting */
+    NOOP = 0,
+    EXIT,
+    HELP,
+    PAUSE,
+    QUERY,
+    RESUME,
+    LAST /* needed for counting */
 };
 
 /* cmds lexicographically ordered */
@@ -42,13 +42,10 @@ static char* strexpand(char *str, ssize_t size, ssize_t delta) {
     ssize_t i;
     if(delta == 0)
         return str;
-    if( NULL == (t = malloc(size + delta)) ) {
-        fprintf(stderr, "%s\n", ERR_MALLOC_MSG);
-        exit(ERR_MALLOC_CODE);
-    }
-    for(i = 0; i < size; i++) {
+    if( NULL == (t = malloc(size + delta)) )
+        err(ERR_MALLOC, NULL);
+    for(i = 0; i < size; i++)
         t[i] = str[i];
-    }
     free(str);
     return t;
 }
@@ -61,10 +58,8 @@ static int extract(struct buffer *buf, char **str) {
         ssize_t j, k;
         if(buf->pos >= buf->len) {
             buf->pos = 0;
-            if( -1 == (buf->len = read(0, buf->data, sizeof(buf->data))) ) {
-                fprintf(stderr, "%s\n", ERR_READ_MSG);
-                exit(ERR_READ_CODE);
-            }
+            if( -1 == (buf->len = read(0, buf->data, sizeof(buf->data))) )
+                err(ERR_READ, NULL);
         }
         if(buf->len == 0)
             break;
@@ -84,10 +79,8 @@ static int extract(struct buffer *buf, char **str) {
 static void inform(const char *fmt, ... ) {
     va_list args;
     va_start(args, fmt);
-    if(vprintf(fmt, args) < 0) {
-        fprintf(stderr, "%s\n", ERR_WRITE_MSG);
-        exit(ERR_WRITE_CODE);
-    }
+    if(vprintf(fmt, args) < 0)
+        err(ERR_WRITE, NULL);
 }
 
 static void print_time(unsigned time) {
@@ -102,10 +95,8 @@ static void print_time(unsigned time) {
 
 static void prompt(void) {
     inform("%s", INTER_PROMPT);
-    if( EOF == fflush(stdout) ) {
-        fprintf(stderr, "%s\n", ERR_WRITE_MSG);
-        exit(ERR_WRITE_CODE);
-    }
+    if( EOF == fflush(stdout) )
+        err(ERR_WRITE, NULL);
 }
 
 static int match(const char *str, const char *template) {
@@ -120,44 +111,44 @@ static int match(const char *str, const char *template) {
 static enum type eval(const char *str) {
     enum type i, j;
     int r;
-    for(i = 0; (i < last_t) && ( 0 == (r = match(str, cmds[i])) ); i++)
+    for(i = 0; (i < LAST) && ( 0 == (r = match(str, cmds[i])) ); i++)
         ;
-    if(i == last_t) {
+    if(i == LAST) {
         inform("%s\n", INTER_INVCMD_MSG);
-        return help_t;
+        return HELP;
     }
     if(r > 0)
         return i;
-    for(j = i + 1; (j < last_t) && (match(str, cmds[j]) < 0); j++) 
+    for(j = i + 1; (j < LAST) && (match(str, cmds[j]) < 0); j++) 
         ;
     if(j - i > 1) {
         enum type k;
         for(k = i; k < j; k++)
             inform("%s\n", cmds[k]);
-        return null_t;
+        return NOOP;
     }
     return i;
 }
 
 static void run(enum type type, struct shared *shr) {
     switch(type) {
-    case null_t:
+    case NOOP:
         break;
-    case help_t:
+    case HELP:
         inform("%s\n", INTER_HELP_MSG);
         break;
-    case pause_t:
+    case PAUSE:
         if( lock_ctl(shr) )
             inform("%s\n", INTER_PAUSED_MSG);
         print_time(get_time(shr));
         break;
-    case query_t:
+    case QUERY:
         print_time(get_time(shr));
         break;
-    case exit_t:
+    case EXIT:
         print_time(get_time(shr));
         exit(0);
-    case resume_t:
+    case RESUME:
         if( unlock_ctl(shr) )
             inform("%s\n", INTER_RESUMED_MSG);
         print_time(get_time(shr));

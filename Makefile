@@ -3,17 +3,22 @@ FLAGS   += -Wall
 INCLUDE ?= -I /usr/local/include
 LIB     ?= -L /usr/local/lib -l sndio -l pthread
 
-x : main.c timer.h defaults.h args.o threads.o inter.o
-	$(COMP) $(FLAGS) $(INCLUDE) $(LIB) -o x main.c args.o threads.o inter.o
+OBJ = $(COMP) $(FLAGS)
 
-args.o : args.c args.h timer.h defaults.h
-	$(COMP) $(FLAGS) -c -o args.o args.c
+x : main.c defaults.h messages.o args.o threads.o inter.o
+	$(OBJ) $(INCLUDE) $(LIB) -o x main.c messages.o args.o threads.o inter.o
 
-threads.o : threads.c threads.h timer.h
-	$(COMP) $(FLAGS) -c -o threads.o threads.c
+messages.o : messages.c messages.h
+	$(OBJ) -c -o messages.o messages.c
 
-inter.o : inter.c inter.h timer.h threads.h
-	$(COMP) $(FLAGS) -c -o inter.o inter.c
+args.o : args.c args.h defaults.h
+	$(OBJ) -c -o args.o args.c
+
+threads.o : threads.c threads.h messages.h
+	$(OBJ) -c -o threads.o threads.c
+
+inter.o : inter.c inter.h messages.h threads.h
+	$(OBJ) -c -o inter.o inter.c
 
 clean :
-	rm -f x args.o threads.o inter.o
+	rm -f x messages.o args.o threads.o inter.o

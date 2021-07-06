@@ -3,4 +3,4 @@
 
 void* inter(void *arg);
 
-#endif
+#endif // #ifndef __INTER_H__

@@ -1,8 +1,7 @@
 #include <stddef.h>
 
-#include "timer.h"
-#include "defaults.h"
 #include "args.h"
+#include "defaults.h"
 
 static int str2num(const char *str, unsigned *num) {
     unsigned i;
