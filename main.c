@@ -7,6 +7,7 @@
 #include "timer.h"
 #include "defaults.h"
 #include "args.h"
+#include "threads.h"
 #include "inter.h"
 
 #define PLAY_BUF_SIZE   (1024 * 128)
@@ -29,47 +30,10 @@ static void mode(const struct cmd_arg *arg, struct shared *shr) {
     }
 }
 
-unsigned get_time(struct shared *shr) {
-    unsigned res;
-    if( pthread_mutex_lock(&shr->mtime) ) {
-        fprintf(stderr, "%s\n", ERR_MUTEX_MSG);
-        exit(ERR_MUTEX_CODE);
-    }
-    res = shr->time;
-    if( pthread_mutex_unlock(&shr->mtime) ) {
-        fprintf(stderr, "%s\n", ERR_MUTEX_MSG);
-        exit(ERR_MUTEX_CODE);
-    }
-    return res;
-}
-
-static void set_time(unsigned time, struct shared *shr) {
-    if( pthread_mutex_lock(&shr->mtime) ) {
-        fprintf(stderr, "%s\n", ERR_MUTEX_MSG);
-        exit(ERR_MUTEX_CODE);
-    }
-    shr->time = time;
-    if( pthread_mutex_unlock(&shr->mtime) ) {
-        fprintf(stderr, "%s\n", ERR_MUTEX_MSG);
-        exit(ERR_MUTEX_CODE);
-    }
-}
-
-static void poll(struct shared *shr) {
-    if( pthread_mutex_lock(&shr->ctl) ) {
-        fprintf(stderr, "%s\n", ERR_MUTEX_MSG);
-        exit(ERR_MUTEX_CODE);
-    }
-    if( pthread_mutex_unlock(&shr->ctl) ) {
-        fprintf(stderr, "%s\n", ERR_MUTEX_MSG);
-        exit(ERR_MUTEX_CODE);
-    }
-}
-
 static void timer(struct shared *shr) {
     unsigned t = get_time(shr);
     while(t) {
-        poll(shr);
+        request(shr);
         while(sleep(1))
             ;
         set_time(--t, shr);
@@ -80,7 +44,7 @@ static void play(struct sio_hdl *sio) {
     int fd;
     char buf[PLAY_BUF_SIZE];
     ssize_t i;
-    if( -1 == (fd = open(ALARM_FILENAME, O_RDONLY)) ) {
+    if( -1 == (fd = open(ALARM_FILE_PATH, O_RDONLY)) ) {
         fprintf(stderr, "%s\n", ERR_AFILE_OPEN_MSG);
         exit(ERR_AFILE_OPEN_CODE);
     }

@@ -1,8 +1,6 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-#include <pthread.h>
-
 #define NAME    "timer"
 #define USAGE   \
     NAME " [flags] [time]" "\n" \
@@ -53,17 +51,5 @@ enum {
     ERR_WRITE_CODE,
     ERR_MALLOC_CODE
 };
-
-struct shared {
-    pthread_mutex_t mtime;
-    pthread_mutex_t ctl;
-    pthread_t inter_thr;
-    int locked;
-    unsigned time;
-};
-
-#define SHARED_INIT {PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER}
-
-unsigned get_time(struct shared *shr);
 
 #endif

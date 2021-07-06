@@ -6,6 +6,7 @@
 
 #include "timer.h"
 #include "inter.h"
+#include "threads.h"
 
 #define BUF_SIZE    1024
 
@@ -136,28 +137,6 @@ static enum type eval(const char *str) {
         return null_t;
     }
     return i;
-}
-
-static int lock_ctl(struct shared *shr) {
-    if(shr->locked)
-        return 0;
-    if( pthread_mutex_lock(&shr->ctl) ) {
-        fprintf(stderr, "%s\n", ERR_MUTEX_MSG);
-        exit(ERR_MUTEX_CODE);
-    }
-    shr->locked = 1;
-    return 1;
-}
-
-static int unlock_ctl(struct shared *shr) {
-    if(!shr->locked)
-        return 0;
-    if( pthread_mutex_unlock(&shr->ctl) ) {
-        fprintf(stderr, "%s\n", ERR_MUTEX_MSG);
-        exit(ERR_MUTEX_CODE);
-    }
-    shr->locked = 0;
-    return 1;
 }
 
 static void run(enum type type, struct shared *shr) {
